@@ -14,37 +14,37 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
 
-  useEffect(() => {
-    async function init() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        router.push('/login');
-        return;
-      }
-      setUser(user);
-      await fetchTasks('all');
-    }
-    init();
-  }, []);
-
-  async function fetchTasks(filter = 'all') {
-    setLoading(true);
-    let query = supabase
-      .from('tasks')
-      .select('*')
-      .order('priority', { ascending: false });
-
-    if (filter === 'active') query = query.eq('completed', false);
-    if (filter === 'completed') query = query.eq('completed', true);
-
-    const { data, error } = await query;
-    if (error) {
-      console.error('Error:', error.message);
-    } else {
-      setTasks(data || []);
-    }
-    setLoading(false);
+  // 1. Deklarasi fetchTasks DULU
+async function fetchTasks(filter = 'all') {
+  setLoading(true);
+  let query = supabase
+    .from('tasks')
+    .select('*')
+    .order('priority', { ascending: false });
+  if (filter === 'active') query = query.eq('completed', false);
+  if (filter === 'completed') query = query.eq('completed', true);
+  const { data, error } = await query;
+  if (error) {
+    console.error('Error:', error.message);
+  } else {
+    setTasks(data || []);
   }
+  setLoading(false);
+}
+
+// 2. Baru useEffect yang memanggil fetchTasks
+useEffect(() => {
+  async function init() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      router.push('/login');
+      return;
+    }
+    setUser(user);
+    await fetchTasks('all');
+  }
+  init();
+}, []);
 
   function handleFilterChange(newFilter) {
     setFilter(newFilter);

@@ -1,5 +1,4 @@
 'use client';
-
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import TaskForm from './components/TaskForm';
@@ -10,9 +9,26 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
 
-  useEffect(() => {
-    fetchTasks(filter);
+  async function fetchTasks(currentFilter = 'all') {
+    setLoading(true);
+    let query = supabase
+      .from('tasks')
+      .select('*')
+      .order('priority', { ascending: false });
+    if (currentFilter === 'active') query = query.eq('completed', false);
+    if (currentFilter === 'completed') query = query.eq('completed', true);
+    const { data, error } = await query;
+    if (error) {
+      console.error('Error:', error.message);
+    } else {
+      setTasks(data || []);
+    }
+    setLoading(false);
+  }
 
+ useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchTasks(filter);
     const channel = supabase
       .channel('tasks-realtime')
       .on(
@@ -39,30 +55,10 @@ export default function Home() {
         }
       )
       .subscribe();
-
     return () => {
       supabase.removeChannel(channel);
     };
   }, []);
-
-  async function fetchTasks(filter = 'all') {
-    setLoading(true);
-    let query = supabase
-      .from('tasks')
-      .select('*')
-      .order('priority', { ascending: false });
-
-    if (filter === 'active') query = query.eq('completed', false);
-    if (filter === 'completed') query = query.eq('completed', true);
-
-    const { data, error } = await query;
-    if (error) {
-      console.error('Error:', error.message);
-    } else {
-      setTasks(data || []);
-    }
-    setLoading(false);
-  }
 
   function handleFilterChange(newFilter) {
     setFilter(newFilter);
@@ -89,8 +85,6 @@ export default function Home() {
     <main className="max-w-3xl mx-auto p-8">
       <h1 className="text-3xl font-bold mb-6">Task Manager</h1>
       <TaskForm onTaskCreated={handleTaskCreated} />
-
-      {/* Filter buttons */}
       <div className="flex gap-2 mt-6">
         {['all', 'active', 'completed'].map((f) => (
           <button
@@ -106,7 +100,6 @@ export default function Home() {
           </button>
         ))}
       </div>
-
       <div className="mt-4 space-y-3">
         {tasks.length === 0 && (
           <p className="text-gray-500 text-center py-8">Tidak ada task.</p>
