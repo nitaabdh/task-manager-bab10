@@ -82,7 +82,7 @@ export default function Home() {
   if (loading) return <p className="p-8 text-gray-500">Memuat tasks...</p>;
 
   return (
-    <main className="max-w-3xl mx-auto p-8">
+    <main className="max-w-3xl mx-auto p-8 bg-red-500">
       <h1 className="text-3xl font-bold mb-6">Task Manager</h1>
       <TaskForm onTaskCreated={handleTaskCreated} />
       <div className="flex gap-2 mt-6">
